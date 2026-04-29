@@ -1,0 +1,82 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+._*
+.Spotlight-V100
+.Trashes
+
+# Linux
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Editors / IDEs
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.project
+.classpath
+*.sublime-project
+*.sublime-workspace
+
+# Vim
+*.swp
+*.swo
+.*.swp
+.*.swo
+Session.vim
+
+# Emacs
+\#*\#
+.\#*
+
+# JetBrains
+*.iml
+.idea/
+
+# Office / temp files
+~$*
+*.tmp
+*.bak
+*.orig
+
+# Logs
+*.log
+
+# Diagrams (binaries that should not live in Git)
+# Add specific patterns here if you start exporting renders alongside sources
+# *.png
+# *.pdf
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Node (only if a tool is added later)
+node_modules/
+
+# Python (only if a tool is added later)
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+
+# Local notes / scratch
+scratch/
+TODO.local.md
+
+# Claude Code
+.claude/
