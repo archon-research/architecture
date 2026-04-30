@@ -1,6 +1,6 @@
 # Laniakea Architecture
 
-Architecture documentation for Laniakea — the bridge between engineering implementation and Synome governance principles.
+Architecture documentation for Laniakea — the bridge between engineering implementation and Sky governance principles.
 
 ## Who This Is For
 
