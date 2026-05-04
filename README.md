@@ -24,7 +24,7 @@ Architecture documentation for Laniakea — the bridge between engineering imple
 - [`stl`](https://github.com/archon-research/stl) — STL service family (Go). Currently houses `stl-verify` — the block watcher and indexer that forms the Phase-1 data spine.
 - [`synome`](https://github.com/archon-research/synome) — Source-of-truth platform (specs, graph DB, Explorer UI)
 - [`infrastructure`](https://github.com/archon-research/infrastructure) — Platform layer (clusters, GitOps, observability, networking)
-- [`laniakea-docs`](https://github.com/archon-research/laniakea-docs) — Synome framework, Atlas, and business concepts
+- [`laniakea-docs`](https://github.com/sky-ecosystem/laniakea-docs) — Synome framework, Atlas, and business concepts
 
 ## Phase Context
 
