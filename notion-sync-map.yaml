@@ -1,0 +1,71 @@
+# Maps repo files to Notion page IDs for automated sync.
+# Git is source of truth; Notion is the derived/published view.
+# The scheduled Claude Code agent reads this file to know what to update.
+
+root_page: 351b8769-3a5a-813c-ab10-c55828932fbe  # "Laniakea Architecture" top-level page
+
+mappings:
+  # Top-level
+  - path: README.md
+    notion_id: 351b8769-3a5a-813c-ab10-c55828932fbe
+    title: Laniakea Architecture
+
+  # decisions/
+  - path: decisions/README.md
+    notion_id: 351b8769-3a5a-81a5-8325-f2135a222890
+    title: Architecture Decisions
+  - path: decisions/constraints-and-assumptions.md
+    notion_id: 351b8769-3a5a-815a-a7da-d11d9ff0d351
+    title: Constraints & Assumptions
+  - path: decisions/trade-offs.md
+    notion_id: 351b8769-3a5a-8124-ab9d-c44c2d17a26a
+    title: Architecture Trade-offs
+
+  # diagrams/
+  - path: diagrams/
+    notion_id: 351b8769-3a5a-8101-a4e4-ff0ad1c72358
+    title: Diagrams
+
+  # mappings/
+  - path: mappings/laniakea-engineering-business-mapping.md
+    notion_id: 351b8769-3a5a-8146-86d4-cc0bbe2e49c1
+    title: "Engineering \u2194 Business Terminology Mapping"
+
+  # operational/
+  - path: operational/README.md
+    notion_id: 351b8769-3a5a-81fd-84a1-e02c25acfb55
+    title: Operational Considerations
+  - path: operational/resilience-patterns.md
+    notion_id: 351b8769-3a5a-8171-ad28-d89e8df28548
+    title: Resilience Patterns
+  - path: operational/scaling-considerations.md
+    notion_id: 351b8769-3a5a-81ca-94a1-f26abb0d469a
+    title: Scaling Considerations
+
+  # reference/
+  - path: reference/README.md
+    notion_id: 351b8769-3a5a-81b4-bde3-e89b5c91efcc
+    title: Reference Documents
+  - path: reference/glossary.md
+    notion_id: 351b8769-3a5a-819c-b22a-ec4ee1eb6638
+    title: Glossary
+  - path: reference/security-governance-model.md
+    notion_id: 351b8769-3a5a-81e1-a5c7-ff0de37bbb42
+    title: Security & Governance Model
+  - path: reference/synome-concepts-for-engineers.md
+    notion_id: 351b8769-3a5a-8143-bbb4-cca975e9a852
+    title: Synome Concepts for Engineers
+  - path: reference/technology-stack-matrix.md
+    notion_id: 351b8769-3a5a-8114-b959-ef4a55e2ba88
+    title: Technology Stack Matrix
+
+  # roadmap/
+  - path: roadmap/README.md
+    notion_id: 351b8769-3a5a-81e7-9e5b-c62102bcab45
+    title: Laniakea Roadmap
+  - path: roadmap/laniakea-phase-evolution.md
+    notion_id: 351b8769-3a5a-8178-9226-c8ce5295a523
+    title: Laniakea Phase Evolution
+  - path: roadmap/phase-1-status.md
+    notion_id: 351b8769-3a5a-811e-8f9f-f6d3d913bef7
+    title: Phase 1 Status
