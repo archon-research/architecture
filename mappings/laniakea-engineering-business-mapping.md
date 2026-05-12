@@ -1,6 +1,6 @@
 # Laniakea Architecture — Engineering ↔ Business Terminology Mapping
 
-This document maps engineering terms used in the Laniakea architecture to their corresponding Synome framework equivalents. Both audiences reference the same architecture diagram and use this mapping as a translation layer.
+This document maps engineering terms used in the Laniakea architecture to their corresponding Synome framework equivalents. Both audiences reference the same [architecture diagram](../diagrams/laniakea-architecture.excalidraw) and use this mapping as a translation layer.
 
 **Context:** Laniakea is delivered in phases (Foundation 0–4, Factories 5–8, Automation 9–10). The components mapped here exist today and evolve as Laniakea progresses; the mapping itself is durable — terms deepen as later cognitive layers (factories, sentinels, full crystallization) come online, but the underlying engineering ↔ Synome correspondence holds.
 
@@ -8,65 +8,84 @@ This document maps engineering terms used in the Laniakea architecture to their 
 
 | Component | Function | Engineering Term | Synome / Business Term |
 |---|---|---|---|
-| **Entry Point** | Users authenticate and express intent(e.g., Attest UI) | Client app | User Interface |
-| **Request handler** | Validates requests, enforces governance policy | API gateway | Relay Beacon (LPHA, pBEAM) |
-| **Access Control** | Authenticates users (SIWE/MetaMask), authorizes access, manages roles | Identity & Access | Governance |
-| **Synome** | Holds the Atlas, agent registry, beacon registry, formulas, and governance rules. Read by Core; never written to by Core. | Source-of-truth platform | Synome (the source-of-truth layer) |
-| **Core** | Implements business logic | Domain | LPLA Beacon (read-only), LPHA Beacon (executor), HPHA Sentinel (monitoring) |
-| **Data** | Records verified state, position data, risk calculations, attestations, audit trail | Data Layer | Data |
+| **Blockchain** | External source of truth — smart contracts, events, oracles | Public chain state | On-chain protocol state |
+| **Data Ingest** | Watches blockchains, scrapes blocks, transactions, and events | Block watcher / indexer (STL) | Blockchain Observer |
+| **Synome** | The canonical data layer containing both Rules and State | Source-of-truth platform | Synome (the institutional memory) |
+| **Synome — Rules** | Governance-set configuration: formulas, parameters, definitions | Config store / rules engine | Atlas (encoded as specs) |
+| **Synome — State** | Operational data: positions, records, events | Operational database (TimescaleDB) | Crystallization Interface / Evidence |
+| **Core** | Compute layer: applies Rules to State, produces derived state | Domain services / business logic | Beacon Types (LPLA/LPHA/HPHA) |
+| **Access & Routing** | Authenticates requests, enforces permissions, routes to Core or State | API gateway + auth (RBAC) | Relay Beacon / Governance enforcement |
+| **Applications** | External apps, dashboards, and integrations built by teams | Client apps / UIs / API consumers | User Interfaces |
 
-## Component Description
+## Component Descriptions
 
-### API Gateway ↔ Relay Beacon (LPHA, pBEAM)
-**What it does:** Accepts incoming execution requests, validates against an authority envelope (rate limits, approved targets), routes requests through Controllers, enforces governance constraints.
+### Blockchain — On-chain Protocol State
+**What it is:** The external blockchains where smart contracts, price oracles, and protocol transactions live. Not part of Laniakea — Laniakea reads from it.
 
-- **Engineering perspective:** API Gateway pattern that implements bounded external access—validates requests, enforces rate limiting, routes to appropriate services
-- **Business perspective:** Relay Beacon is the regulated entry aperture (LPHA: Low Power, High Authority) that translates external requests into validated Synome operations. pBEAM (Process BEAM) executes operations within governance-defined bounds. Governed by Council Beacon (aBEAM) which controls what Relay Beacons can do.
+- **Engineering perspective:** EVM chains (Ethereum, Base, Arbitrum, etc.) hosting PAU contracts, token contracts, oracle feeds
+- **Business perspective:** The on-chain state of the Sky protocol — where USDS, BEAMs, and agent contracts live
 
-### Identity & Access ↔ Governance
-**What it does:** Authenticates users (validates credentials), manages roles and permissions, decides what each user/service can access.
+### Data Ingest — Blockchain Observer
+**What it does:** Subscribes to blockchain providers, fetches new blocks, detects chain reorgs, scrapes smart contract events and oracle prices, writes raw data into Synome State.
 
-- **Engineering perspective:** Auth service with SIWE support, RBAC enforcement
-- **Business perspective:** Language Intent includes governance rules about who can take what action—this service enforces those intent rules
+- **Engineering perspective:** The STL Go service — watcher (WebSocket subscription), backfill workers, oracle price indexers, position trackers. Supports Chainlink, Chronicle, Redstone, and protocol-native oracles.
+- **Business perspective:** The system's eyes on the blockchain — observes what's happening on-chain and records it.
 
-### Synome ↔ Source-of-truth Platform
-**What it does:** Stores and serves the Atlas (specs, formulas, deontic rules), the agent registry, and the beacon registry. Core services read from Synome to know what the rules are; Core does not write to Synome. Spec changes go through human review.
+### Synome — The Canonical Data Layer
+**What it is:** The single source of truth containing both governance rules and operational state. Core reads from it and writes derived state back to it.
 
-- **Engineering perspective:** Python platform built on a branch-aware graph database with Git-backed specs. Specs are written in a restricted Python subset (no classes, lambdas, or comprehensions), validated by a `flake8` plugin, and parsed into a symbolic-math representation that renders to LaTeX (for the UI) or to executable Python (for runtime). The Explorer UI surfaces identities, formulas, dependencies, and branch comparisons.
-- **Business perspective:** Synome is the institutional memory — the canonical, branch-versioned record of what the protocol's rules ARE. The Atlas lives here. **Crystallization** is the path by which probabilistic evidence promotes into binding Atlas axioms; that promotion writes INTO Synome, not into the operational data store. In Phase 1 the path is fully human-reviewed; later phases automate parts of it.
+The Synome has two partitions:
 
-### Domain ↔ Beacon Types (LPLA/LPHA/HPHA)
-**What it does:** Implements core business logic—verifying state, computing positions, attesting to results, monitoring system health.
+#### Rules (slow-changing)
+**What it holds:** Risk formulas, settlement logic, agent definitions, authority chain, lifecycle rules, token rules, matching rules, phase carve-outs. Changes at governance speed.
 
-**Beacon Classification:**
-- **LPLA Beacon** (Low-Privilege, Low-Authority): Read-only verification logic, no state mutations. Example: Verify service.
-- **LPHA Beacon** (Low-Privilege, High-Authority): Deterministic execution of bounded operations, writes verified results. Example: NFAT (position computation), Attest (attestation signing).
-- **HPHA Sentinel** (High-Privilege, High-Authority): Monitors system state, can trigger escalations and emergency actions.
+- **Engineering perspective:** Config store for governance-set parameters. See [synome-rules.md](../reference/synome-rules.md) for the full schema.
+- **Business perspective:** The Atlas encoded in machine-readable form — what the protocol's rules ARE.
 
-- **Engineering perspective:** Microservices implementing hexagonal architecture (ports + adapters). Services read from State Cache, process domain logic, write to both Event Stream and Data Store.
-- **Business perspective:** Regulated Beacons operationalize Synome constraints—they execute only operations permitted by Atlas/Language Intent, enforce Deontic Skeleton rules, and coordinate through Probabilistic Mesh
+#### State (fast-changing)
+**What it holds:** Positions, oracle prices, block metadata, NFAT records, attestations, risk scores, settlement records, breach records, penalty calculations, audit trail.
 
-### Data Store ↔ Crystallization Interface / Artifact Hierarchy
-**What it does:** Persistent record of verified state — positions, risk calculations, NFAT records, attestations indexed from chain events, and the engineering audit trail. Append-only; never overwrites history.
+- **Engineering perspective:** Operational database (PostgreSQL/TimescaleDB). Append-only writes, block versioning for reorg handling. See [synome-state.md](../reference/synome-state.md) for the full schema.
+- **Business perspective:** The evidence side — what HAS happened and what was computed. Crystallization reads from here and promotes findings into Rules.
 
-- **Engineering perspective:** PostgreSQL (TimescaleDB), S3 archives, immutable append-only writes (`ON CONFLICT DO NOTHING` pattern). Block versioning preserves state across reorgs.
-- **Business perspective:** The Crystallization Interface captures the frozen, verified snapshots of system state (artifacts). The Artifact Hierarchy describes how state is layered (config → agent → instance). This is the **evidence side** of the system — what *has happened* — and is distinct from Synome, which holds what the rules *are*. Crystallization itself (the promotion of evidence into binding Atlas axioms) reads from this layer and writes into Synome; soft knowledge becomes hard rules in Synome, not here.
+### Core — Compute Layer
+**What it does:** Reads Rules and State from the Synome, applies business logic, writes derived state back. Handles risk calculation, settlement, NFAT lifecycle, attestation workflows, breach monitoring, auctions, and distributions.
+
+- **Engineering perspective:** Domain services implementing business logic. See [core-services.md](../reference/core-services.md) for the full service catalog.
+- **Business perspective:** The regulated Beacons that operationalize Synome constraints:
+  - **LPLA Beacon** (Low Power, Low Authority): Read-only verification, no state mutations
+  - **LPHA Beacon** (Low Power, High Authority): Deterministic execution of bounded operations
+  - **HPHA Sentinel** (High Power, High Authority): Monitors system state, triggers escalations (Phase 9–10)
+
+### Access & Routing — API Gateway + Auth
+**What it does:** All requests from Applications pass through here. Authenticates callers, enforces RBAC permissions, then routes: read requests go directly to State, write/action requests go to Core.
+
+- **Engineering perspective:** API gateway with auth middleware, RBAC enforcement, request routing
+- **Business perspective:** The governance enforcement point — ensures only authorized actions reach the system. Maps to the Relay Beacon (LPHA, pBEAM) pattern: validates against authority envelope before executing.
+
+### Applications — External Interfaces
+**What it is:** The apps, dashboards, and integrations that teams build to interact with the system. Not part of the core architecture — they consume it.
+
+- **Engineering perspective:** Client apps, web UIs, API consumers, third-party integrations
+- **Business perspective:** How users (internal teams, institutional investors, governance participants) interact with the protocol
 
 ---
 
-## Supporting Components
+## Data Flow Summary
 
-### Data Ingest ↔ Blockchain Observer
-**What it does:** Subscribes to blockchain providers, fetches new blocks, detects chain reorgs, populates ephemeral state for Domain services.
-
-- **Engineering perspective:** Watcher service with WebSocket subscription, reorg detection
-- **Business perspective:** Observer perceives blockchain state changes and alerts the system.
-
-### State Cache (Internal)
-**What it does:** Ephemeral storage of active block data and computation state. Read by Domain services; written by both Data Ingest and Domain services during processing.
-
-- **Engineering perspective:** Redis, high-speed lookup, temporary working memory, survives pod restarts but not cluster failures
-- **Business perspective:** Working memory of the system—temporary, losable state used for fast decision-making during computation. Not part of the formal Crystallization Interface (frozen state).
+```
+Blockchain
+    ↑ listens
+Data Ingest
+    ↓ writes
+Synome (Rules + State)
+    ↑↓ reads/writes
+Core ←── reads Rules
+    ↑ writes
+Access & Routing
+    ↑
+Applications
+```
 
 ---
 
@@ -78,14 +97,11 @@ This document maps engineering terms used in the Laniakea architecture to their 
 - Know which services implement which Synome principles and how the mapping deepens as later phases land
 
 **For Business/Governance Teams:**
-- See how the architecture operationalizes Atlas principles through regulated beacons and crystallization
-- Understand that Synome holds the rules and the Data Store holds the evidence — Crystallization is the path from evidence to binding Atlas axioms, writing into Synome
+- See how the architecture operationalizes Atlas principles through regulated beacons
+- Understand that the Synome holds both the rules AND the evidence — Rules is what must be true, State is what has happened
 - Discuss policy changes knowing which services implement which constraints
-- Understand the roadmap: Foundation builds the institutional layer; Factories make agent onboarding repeatable; Automation adds Sentinels and self-regulating capability
 
 **For Presentations & Synchronization:**
 - Use the Synome terminology when discussing governance and long-term architecture
 - Use the Laniakea Phase framing when discussing current rollout timelines
 - Reference this mapping to translate between team vocabularies
-
----

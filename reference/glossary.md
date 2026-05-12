@@ -15,7 +15,7 @@ When a term has both a business and an engineering form, both are listed and lin
 | **sUSDS** | ERC-4626 savings token. Yield accrues via increasing exchange rate. |
 | **SKY** | Governance token of the protocol. Fixed supply, deflationary via buybacks. |
 | **Laniakea** | The current multi-year **infrastructure upgrade** of Sky toward automated capital deployment at scale. Delivered in 11 phases (0–10). |
-| **Synome** | Sky's **source-of-truth** layer: the data and governance system that holds the Atlas, agent directives, and crystallized rules. Implemented in the `synome` engineering repo. |
+| **Synome** | Sky's **canonical data layer** containing both governance rules (**Rules** partition) and operational state (**State** partition). Rules holds the Atlas in machine-readable form; State holds positions, records, and events. Core reads from both and writes derived state back to State. See [synome-rules.md](synome-rules.md) and [synome-state.md](synome-state.md). |
 | **Atlas** | Sky's **governance constitution** — the set of principles, axioms, and formulas that define how the protocol must operate. Encoded as Python specs in `next-gen-atlas`. |
 | **The Hearth** | The teleological framework grounding Sky's long-term mission (three immutable commitments to natural life, the solar system, and natural sovereignty). |
 
@@ -90,7 +90,7 @@ A **Synomic Agent** is a durable, ledger-native entity that can own assets and m
 
 | Term | Definition |
 |---|---|
-| **STL block-data service** | The Go service that watches blocks and indexes protocol state. *Not the same as the Phase-9 sentinel `stl-base`* — it is the Phase-1 data-ingestion layer that any beacon (`lpla-verify`, `lpha-attest`, etc.) depends on. |
+| **STL block-data service** | The Go service that watches blocks and indexes protocol state. *Not the same as the Phase-9 sentinel `stl-base`* — it is the Phase-1 **Data Ingest** layer that scrapes blocks, transactions, events, and oracle prices from blockchains and writes them into Synome State. |
 | **Watcher** | The live-data service: subscribes to a managed RPC provider over WebSocket, fetches receipts / traces / blobs, detects reorgs, publishes events to a FIFO message stream. |
 | **Backfill** | Service that fills gaps in block data via HTTP polling when the watcher has been down. |
 | **Backup Worker** | Archives raw block data to durable object storage for long-term storage and audit. |
@@ -103,7 +103,7 @@ A **Synomic Agent** is a durable, ledger-native entity that can own assets and m
 
 | Term | Definition |
 |---|---|
-| **Synome (the platform)** | The Python platform implementing the source of truth — parser, graph-DB integration, Explorer UI, HTTP backend, code-gen. |
+| **Synome (the platform)** | The Python platform implementing the canonical data layer — parser, graph-DB integration, Explorer UI, HTTP backend, code-gen. Hosts both Rules (governance config) and State (operational data). |
 | **Atlas spec submodule** | Git submodule containing the actual specs and the spec-validation Python package. |
 | **Spec** | A formula or rule encoded as Python in a restricted subset (no classes, lambdas, comprehensions). Validated by a `flake8` plugin and parsed into a symbolic-math representation. |
 | **Graph database (Synome)** | A branch-aware (Git-backed) graph database that stores identities, formulas, and dependencies. All identity reads are scoped to a branch. |

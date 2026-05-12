@@ -6,7 +6,7 @@ A working translation of the Synome / Atlas / Beacon vocabulary into the languag
 
 ## The one-paragraph version
 
-The **Atlas** is the protocol's constitution — the rules the system must obey. The **Synome** is the data and code platform that stores the Atlas in a machine-readable form (specs in restricted Python, parsed into symbolic math, stored in a branch-aware graph database). A **Synomic Agent** is a durable on-chain entity that owns capital and can act. A **Beacon** is the bounded action aperture through which an agent (human or automated) actually does anything in the world. **BEAMs** are the on-chain authority tokens that grant beacons high-authority operations, organised in a strict hierarchy (admin → configurator → process). **Sentinels** are a distinguished, high-authority class of beacon that watch for misbehaviour and can halt the system. Phase 1 builds the foundation; Sentinels and most automation arrive in Phase 9–10.
+The **Atlas** is the protocol's constitution — the rules the system must obey. The **Synome** is the canonical data layer that holds both the Atlas in machine-readable form (**Rules**) and the operational state of the system (**State**). A **Synomic Agent** is a durable on-chain entity that owns capital and can act. A **Beacon** is the bounded action aperture through which an agent (human or automated) actually does anything in the world. **BEAMs** are the on-chain authority tokens that grant beacons high-authority operations, organised in a strict hierarchy (admin → configurator → process). **Sentinels** are a distinguished, high-authority class of beacon that watch for misbehaviour and can halt the system. Phase 1 builds the foundation; Sentinels and most automation arrive in Phase 9–10.
 
 That paragraph contains every term you need to read the rest of this repo.
 
@@ -17,7 +17,10 @@ That paragraph contains every term you need to read the rest of this repo.
 | Synome term | Engineering analogue | Notes |
 |---|---|---|
 | Atlas | Spec / constitution / invariant set | Not code yet — written as Python specs and reviewed by humans |
-| Synome | Source-of-truth platform | Like a CMS for the constitution; stores specs, formulas, dependencies |
+| Synome | The canonical data layer (Rules + State) | Both the governance config and the operational database |
+| Synome — Rules | Config store / rules engine | Governance-set formulas, parameters, definitions. See [synome-rules.md](synome-rules.md) |
+| Synome — State | Operational database (TimescaleDB) | Positions, records, events. See [synome-state.md](synome-state.md) |
+| Core | Domain services / compute layer | Reads Rules + State, applies business logic, writes derived state back. See [core-services.md](core-services.md) |
 | Synomic Agent | On-chain account + treasury + governance | An identity that can own and act |
 | Beacon | The single API surface of an agent | Every action an agent takes goes through a beacon |
 | Authority Envelope | A typed authorization token: "what this beacon may do" | Rate limits, allowed targets, attestation duties |
@@ -26,38 +29,35 @@ That paragraph contains every term you need to read the rest of this repo.
 | Sentinel | A high-power, high-authority watchdog | Phase 9–10 only |
 | Crystallization | "Promote this evidence to a binding rule" | The path by which observation becomes constitution |
 
-A handy mental shorthand: **Atlas = the spec**, **Synome = the spec store**, **Beacon = the API endpoint**, **BEAM = the IAM grant**, **Sentinel = the circuit breaker**.
+A handy mental shorthand: **Atlas = the spec**, **Synome = the data layer (rules + state)**, **Core = the compute layer**, **Beacon = the API endpoint**, **BEAM = the IAM grant**, **Sentinel = the circuit breaker**.
 
 ---
 
 ## How the pieces fit at runtime
 
 ```
-   Atlas (the rules)
-       │
-       │  encoded as
-       ▼
-   Synome  ──►  specs, formulas, agent registry, beacon registry
-       │
-       │  reads (off-chain)              │  reads (on-chain via codegen / config)
-       ▼                                 ▼
-   Beacon services                   Smart contracts (PAU, Configurator, BEAMs)
-       │   (LPLA / LPHA / HPHA)             │
-       │   validate + execute               │  enforce authority bounds
-       ▼                                    ▼
-              ──── Public chain state ────
-                       ▲
-                       │ observes, attests, eventually reacts
-                       │
-                Sentinels (Phase 9–10)
+   Blockchain
+       ↑ listens
+   Data Ingest
+       ↓ writes
+   Synome
+       ├── Rules (governance-set config)
+       └── State (operational data)
+              ↑↓ reads / writes
+            Core ←── reads Rules
+              ↑ writes
+       Access & Routing
+              ↑
+       Applications
 ```
 
 The pattern is the same one engineers use every day:
 
-- *Spec* in a single source of truth.
-- *Codegen and config* push that spec into the runtime (services and contracts).
-- *Enforcement* happens at well-defined boundaries (BEAMs on-chain, validation off-chain).
-- *Observability* feeds back evidence — and in later phases that evidence can crystallize into new spec.
+- *Config* in a single source of truth (Synome — Rules).
+- *Operational data* in a database (Synome — State).
+- *Services* read both, compute, and write results back (Core).
+- *Access control* gates all external requests (Access & Routing).
+- *Observability* feeds back evidence — and in later phases that evidence can crystallize into new Rules.
 
 ---
 
@@ -133,13 +133,17 @@ A few framings that have proven useful when reading or designing in this system:
 
 2. **High Power ≠ High Authority.** A clever model running a trading strategy with its own capital is High Power but Low Authority — it cannot move protocol funds. A boring deterministic rate-limit checker is Low Power but High Authority. The protocol cares mostly about authority.
 
-3. **The mapping document is the Rosetta stone.** When a doc switches between "Relay Beacon" and "API gateway", `mappings/laniakea-engineering-business-mapping.md` will tell you they are the same thing.
+3. **The Synome is both rules and state.** Rules change at governance speed (weeks/months). State changes at operational speed (seconds/minutes). They're two partitions of one data layer, not two separate systems.
+
+4. **The mapping document is the Rosetta stone.** When a doc switches between "Relay Beacon" and "API gateway", `mappings/laniakea-engineering-business-mapping.md` will tell you they are the same thing.
 
 ---
 
 ## Cross-references
 
 - `reference/glossary.md` — every term used above, defined in one place
+- `reference/synome-rules.md` — schema of what Rules contains
+- `reference/synome-state.md` — schema of what State contains
+- `reference/core-services.md` — what Core services do
 - `reference/security-governance-model.md` — how authority is granted, enforced, and revoked
-- `mappings/laniakea-engineering-business-mapping.md` — engineering ↔ business term mapping for Phase 1 components
-- `roadmap/laniakea-phase-evolution.md` — when Sentinels, Crystallization automation, and the rest arrive
+- `mappings/laniakea-engineering-business-mapping.md` — engineering ↔ business term mapping
